@@ -1,25 +1,25 @@
-package com.floye.command;// RefCodeCommand.java
+package com.floye.command;
+
 import com.floye.referral.util.CodeManager;
-import com.floye.referral.util.RecipientManager;
-import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.builder.RequiredArgumentBuilder;
-import com.mojang.brigadier.context.CommandContext;
+import com.floye.referral.util.ReferralCounter;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 
 public class RefCodeCommand {
 
     public static void register() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+            // Noeud principal de la commande /ref
             LiteralArgumentBuilder<ServerCommandSource> refNode = LiteralArgumentBuilder
                     .<ServerCommandSource>literal("ref")
+                    // Sous-commande pour afficher le code du joueur
                     .then(LiteralArgumentBuilder
-                            .<ServerCommandSource>literal("claim")
+                            .<ServerCommandSource>literal("code")
                             .executes(context -> {
                                 ServerCommandSource source = context.getSource();
                                 ServerPlayerEntity player = source.getPlayerOrThrow();
@@ -37,22 +37,29 @@ public class RefCodeCommand {
                                 return 1;
                             })
                     )
-                    .then(RequiredArgumentBuilder
-                            .<ServerCommandSource, String>argument("playercode", StringArgumentType.string())
-                            .executes(context -> {
-                                ServerCommandSource source = context.getSource();
-                                String playercode = StringArgumentType.getString(context, "playercode");
+                    // Sous-commande pour réclamer un referral sur le joueur correspondant au code entré
+                    .then(LiteralArgumentBuilder
+                            .<ServerCommandSource>literal("claim")
+                            .then(RequiredArgumentBuilder
+                                    .<ServerCommandSource, String>argument("playercode", StringArgumentType.string())
+                                    .executes(context -> {
+                                        ServerCommandSource source = context.getSource();
+                                        String playercode = StringArgumentType.getString(context, "playercode");
 
-                                String recipientUUID = CodeManager.findPlayerUUIDByCode(playercode);
-                                if (recipientUUID == null) {
-                                    source.sendFeedback(() -> Text.literal("Code invalide ou non trouvé."), false);
-                                    return 0;
-                                }
+                                        String recipientUUID = CodeManager.findPlayerUUIDByCode(playercode);
+                                        if (recipientUUID == null) {
+                                            source.sendFeedback(() -> Text.literal("Code invalide ou non trouvé."), false);
+                                            return 0;
+                                        }
 
-                                RecipientManager.setCurrentRecipient(recipientUUID);
-                                source.sendFeedback(() -> Text.literal("Joueur avec le code " + playercode + " est maintenant le destinataire."), false);
-                                return 1;
-                            })
+                                        // Incrémente le compteur de referrals pour le joueur trouvé
+                                        ReferralCounter.incrementCounter(recipientUUID);
+                                        int total = ReferralCounter.getCounter(recipientUUID);
+                                        source.sendFeedback(() -> Text.literal("Le joueur avec le code " + playercode +
+                                                " a maintenant " + total + " referral(s)."), false);
+                                        return 1;
+                                    })
+                            )
                     );
 
             dispatcher.register(refNode);
