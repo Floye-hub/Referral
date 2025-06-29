@@ -2,6 +2,7 @@ package com.floye.referral;
 
 import com.floye.command.RefCodeCommand;
 import com.floye.referral.util.CodeManager;
+import com.floye.referral.util.ReferralCounter;
 import net.fabricmc.api.ModInitializer;
 
 import org.slf4j.Logger;
@@ -17,8 +18,15 @@ public class Referral implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		CodeManager.loadCodes(); // Charger les codes au démarrage
-		RefCodeCommand.register(); // Enregistrer la commande
+		// Charger les codes de referral existants
+		CodeManager.loadCodes();
+
+		// Charger les compteurs des referrals
+		ReferralCounter.loadCounters();
+
+		// Enregistrer la commande
+		RefCodeCommand.register();
+
 		LOGGER.info("Hello Fabric world!");
 	}
 }
