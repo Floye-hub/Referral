@@ -2,6 +2,7 @@ package com.floye.command;
 
 import com.floye.referral.util.ClaimTracker;
 import com.floye.referral.util.CodeManager;
+import com.floye.referral.util.RewardManager;
 import com.floye.referral.util.ReferralCounter;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.server.command.ServerCommandSource;
@@ -80,6 +81,19 @@ public class RefCodeCommand {
                             )
                     )
 
+                    .then(LiteralArgumentBuilder
+                            .<ServerCommandSource>literal("rewards")
+                            .executes(context -> {
+                                ServerCommandSource source = context.getSource();
+                                ServerPlayerEntity player = source.getPlayerOrThrow();
+                                String playerUUID = player.getUuid().toString();
+
+                                int totalReferrals = ReferralCounter.getCounter(playerUUID);
+                                RewardManager.claimRewards(source, playerUUID, totalReferrals);
+
+                                return 1;
+                            })
+                    )
                     // Sous-commande pour afficher le total de referrals
                     .then(LiteralArgumentBuilder
                             .<ServerCommandSource>literal("total")
