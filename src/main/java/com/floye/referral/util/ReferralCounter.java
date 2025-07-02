@@ -15,7 +15,7 @@ import java.util.Map;
 
 public class ReferralCounter {
     // Stocke le nombre de referrals par UUID
-    private static final Map<String, Integer> COUNTERS = new HashMap<>();
+    public static final Map<String, Integer> COUNTERS = new HashMap<>(); // made public
 
     // Chemin du fichier de sauvegarde
     private static final Path COUNTERS_PATH = FabricLoader.getInstance()
