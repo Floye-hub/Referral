@@ -133,7 +133,7 @@ public class RefAdminCommand {
 
         // /refadmin forceset {playername} {amount}
         refAdminNode.then(LiteralArgumentBuilder.<ServerCommandSource>literal("forceset")
-                .then(RequiredArgumentBuilder.<ServerCommandSource, Entity>argument("playername", EntityArgumentType.entity())
+                .then(RequiredArgumentBuilder.<ServerCommandSource, ServerPlayerEntity>argument("playername", EntityArgumentType.player())
                         .then(RequiredArgumentBuilder.<ServerCommandSource, Integer>argument("amount", IntegerArgumentType.integer())
                                 .executes(context -> {
                                     ServerCommandSource source = context.getSource();
