@@ -23,8 +23,8 @@ public class RefAdminCommand {
                 .requires(source -> source.hasPermissionLevel(2)); // Requires OP level 2
 
         // /refadmin total {playername}
-        refAdminNode.then(LiteralArgumentBuilder.<ServerCommandSource>literal("total")
-                .then(RequiredArgumentBuilder.<ServerCommandSource, Entity>argument("playername", EntityArgumentType.entity())
+        refAdminNode.then(literal("total")
+                .then(argument("playername", EntityArgumentType.entity())
                         .executes(context -> {
                             ServerCommandSource source = context.getSource();
                             Entity entity = EntityArgumentType.getEntity(context, "playername");
@@ -44,7 +44,7 @@ public class RefAdminCommand {
         );
 
         // /refadmin reload
-        refAdminNode.then(LiteralArgumentBuilder.<ServerCommandSource>literal("reload")
+        refAdminNode.then(literal("reload")
                 .executes(context -> {
                     ServerCommandSource source = context.getSource();
                     CodeManager.loadCodes();
@@ -57,8 +57,8 @@ public class RefAdminCommand {
         );
 
         // /refadmin code {playername}
-        refAdminNode.then(LiteralArgumentBuilder.<ServerCommandSource>literal("code")
-                .then(RequiredArgumentBuilder.<ServerCommandSource, Entity>argument("playername", EntityArgumentType.entity())
+        refAdminNode.then(literal("code")
+                .then(argument("playername", EntityArgumentType.entity())
                         .executes(context -> {
                             ServerCommandSource source = context.getSource();
                             Entity entity = EntityArgumentType.getEntity(context, "playername");
@@ -86,8 +86,8 @@ public class RefAdminCommand {
         );
 
         // /refadmin forcereward {playername}
-        refAdminNode.then(LiteralArgumentBuilder.<ServerCommandSource>literal("forcereward")
-                .then(RequiredArgumentBuilder.<ServerCommandSource, Entity>argument("playername", EntityArgumentType.entity())
+        refAdminNode.then(literal("forcereward")
+                .then(argument("playername", EntityArgumentType.entity())
                         .executes(context -> {
                             ServerCommandSource source = context.getSource();
                             Entity entity = EntityArgumentType.getEntity(context, "playername");
@@ -109,8 +109,8 @@ public class RefAdminCommand {
         );
 
         // /refadmin forcereset {playername}
-        refAdminNode.then(LiteralArgumentBuilder.<ServerCommandSource>literal("forcereset")
-                .then(RequiredArgumentBuilder.<ServerCommandSource, Entity>argument("playername", EntityArgumentType.entity())
+        refAdminNode.then(literal("forcereset")
+                .then(argument("playername", EntityArgumentType.entity())
                         .executes(context -> {
                             ServerCommandSource source = context.getSource();
                             Entity entity = EntityArgumentType.getEntity(context, "playername");
@@ -132,9 +132,9 @@ public class RefAdminCommand {
         );
 
         // /refadmin forceset {playername} {amount}
-        refAdminNode.then(LiteralArgumentBuilder.<ServerCommandSource>literal("forceset")
-                .then(RequiredArgumentBuilder.<ServerCommandSource, ServerPlayerEntity>argument("playername", EntityArgumentType.player())
-                        .then(RequiredArgumentBuilder.<ServerCommandSource, Integer>argument("amount", IntegerArgumentType.integer())
+        refAdminNode.then(literal("forceset")
+                .then(argument("playername", EntityArgumentType.player())
+                        .then(argument("amount", IntegerArgumentType.integer())
                                 .executes(context -> {
                                     ServerCommandSource source = context.getSource();
                                     Entity entity = EntityArgumentType.getEntity(context, "playername");
