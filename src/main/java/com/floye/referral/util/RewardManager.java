@@ -3,6 +3,7 @@ package com.floye.referral.util;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 
@@ -95,13 +96,20 @@ public class RewardManager {
 
         for (Reward reward : REWARDS) {
             if (currentReferrals >= reward.requiredReferrals && !claimed.contains(reward.requiredReferrals)) {
-                // Exécuter la commande de récompense
-                source.getServer().getCommandManager().executeWithPrefix(
-                        source.withSilent(),
-                        reward.command.replace("@p", source.getName())
+                // Obtenir la source de commande de la console
+                MinecraftServer server = source.getServer();
+                ServerCommandSource consoleSource = server.getCommandSource();
+
+                // Remplacer @p par le nom du joueur
+                String command = reward.command.replace("@p", source.getName());
+
+                // Exécuter la commande avec la source de la console
+                server.getCommandManager().executeWithPrefix(
+                        consoleSource.withSilent(), // Facultatif : ajouter withSilent() si vous ne voulez pas de feedback dans la console
+                        command
                 );
 
-                // Afficher le message
+                // Afficher le message au joueur
                 source.sendFeedback(() -> Text.literal(reward.message), false);
 
                 // Marquer comme réclamé
@@ -111,6 +119,7 @@ public class RewardManager {
 
         if (!claimed.isEmpty()) {
             saveClaimedRewards();
+            source.sendFeedback(() -> Text.literal("Vous n'avez aucune récompense à réclamer pour le moment."), false);
         } else {
             source.sendFeedback(() -> Text.literal("Vous n'avez aucune récompense à réclamer pour le moment."), false);
         }

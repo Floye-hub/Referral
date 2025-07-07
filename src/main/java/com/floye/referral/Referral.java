@@ -1,9 +1,11 @@
 package com.floye.referral;
 
+import com.floye.command.RefAdminCommand;
 import com.floye.command.RefCodeCommand;
 import com.floye.referral.util.ClaimTracker;
 import com.floye.referral.util.CodeManager;
 import com.floye.referral.util.ReferralCounter;
+import com.floye.referral.util.RewardManager; // Import RewardManager
 import net.fabricmc.api.ModInitializer;
 
 import org.slf4j.Logger;
@@ -28,8 +30,12 @@ public class Referral implements ModInitializer {
 		// Charger les joueurs ayant déjà réclamé un code
 		ClaimTracker.loadClaims();
 
+		// Charger la configuration des récompenses
+		RewardManager.load(); // Ajout de l'appel à RewardManager.load()
+
 		// Enregistrer la commande
 		RefCodeCommand.register();
+		RefAdminCommand.register();
 
 		LOGGER.info("Hello Fabric world!");
 	}
