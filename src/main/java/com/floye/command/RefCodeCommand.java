@@ -89,7 +89,7 @@ public class RefCodeCommand {
                                 String playerUUID = player.getUuid().toString();
 
                                 int totalReferrals = ReferralCounter.getCounter(playerUUID);
-                                RewardManager.claimRewards(source, playerUUID, totalReferrals);
+                                RewardManager.claimReward(player, totalReferrals);
 
                                 return 1;
                             })

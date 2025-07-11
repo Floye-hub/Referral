@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
@@ -24,6 +25,8 @@ public class RewardManager {
     private static final List<Reward> REWARDS = new ArrayList<>();
     private static final Map<String, Set<Integer>> CLAIMED_REWARDS = new HashMap<>();
 
+
+
     public static class Reward {
         public int requiredReferrals;
         public List<String> commands;
@@ -32,6 +35,11 @@ public class RewardManager {
         public int slot;
         public String displayName;
         public List<String> lore;
+    }
+
+    public static ItemStack getRewardItemStack(Reward reward) {
+        Item rewardItem = getRewardItem(reward.item);
+        return new ItemStack(rewardItem);
     }
 
     public static void load() {

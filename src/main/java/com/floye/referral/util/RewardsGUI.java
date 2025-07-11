@@ -2,6 +2,7 @@ package com.floye.referral.util;
 
 import eu.pb4.sgui.api.elements.GuiElementBuilder;
 import eu.pb4.sgui.api.gui.SimpleGui;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.screen.ScreenHandlerType;
@@ -32,7 +33,8 @@ public class RewardsGUI extends SimpleGui {
 
         // Puis ajouter les rewards
         for (RewardManager.Reward reward : RewardManager.getRewards()) {
-            ItemStack rewardStack = RewardManager.getRewardItemStack(reward);
+            Item rewardItem = RewardManager.getRewardItem(reward.item);
+            ItemStack rewardStack = new ItemStack(rewardItem);
 
             GuiElementBuilder element = GuiElementBuilder.from(rewardStack)
                     .setName(Text.literal(reward.displayName).formatted(Formatting.GOLD));

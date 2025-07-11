@@ -101,7 +101,7 @@ public class RefAdminCommand {
                             String targetUUID = target.getUuid().toString();
                             int currentReferrals = ReferralCounter.getCounter(targetUUID);
 
-                            RewardManager.claimRewards(source, targetUUID, currentReferrals + 1); // Simulate a new referral
+                            RewardManager.claimReward(target, currentReferrals + 1);
 
                             return 1;
                         })
