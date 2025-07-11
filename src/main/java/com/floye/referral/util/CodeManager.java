@@ -1,5 +1,6 @@
 package com.floye.referral.util;// CodeManager.java
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import net.fabricmc.loader.api.FabricLoader;
 
@@ -10,7 +11,7 @@ import java.util.*;
 public class CodeManager {
     private static final Path CODES_PATH = FabricLoader.getInstance().getConfigDir().resolve("ref_codes.json");
     private static final File CODES_FILE = CODES_PATH.toFile();
-    private static final Gson GSON = new Gson();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Map<String, String> CODES = new HashMap<>();
 
     public static void loadCodes() {
