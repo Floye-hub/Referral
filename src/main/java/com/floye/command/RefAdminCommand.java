@@ -109,7 +109,7 @@ public class RefAdminCommand {
         );
 
         // /refadmin forcereset {playername}
-        refAdminNode.then(literal("forcereset")
+        refAdminNode.then(literal("forcereward")
                 .then(argument("playername", EntityArgumentType.entity())
                         .executes(context -> {
                             ServerCommandSource source = context.getSource();
@@ -122,10 +122,17 @@ public class RefAdminCommand {
 
                             ServerPlayerEntity target = (ServerPlayerEntity) entity;
                             String targetUUID = target.getUuid().toString();
-                            ReferralCounter.COUNTERS.put(targetUUID, 0);
-                            ReferralCounter.saveCounters();
 
-                            source.sendFeedback(() -> Text.literal("Le compteur de referrals de " + target.getName().getString() + " a été réinitialisé."), true);
+                            // Incrémente le compteur de referrals
+                            ReferralCounter.incrementCounter(targetUUID);
+
+                            // Envoie le feedback à l'utilisateur qui a exécuté la commande
+                            source.sendFeedback(
+                                    () -> Text.literal("Vous avez rajouté 1 au compteur des referrals de "
+                                            + target.getName().getString()),
+                                    true
+                            );
+
                             return 1;
                         })
                 )
