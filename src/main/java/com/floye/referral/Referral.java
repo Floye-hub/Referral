@@ -8,6 +8,7 @@ import com.floye.referral.util.ReferralCounter;
 import com.floye.referral.util.RewardManager; // Import RewardManager
 import net.fabricmc.api.ModInitializer;
 
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +23,10 @@ public class Referral implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		// Charger les codes de referral existants
+		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+			RefAdminCommand.register(dispatcher);
+		});
+
 		CodeManager.loadCodes();
 
 		// Charger les compteurs des referrals
@@ -35,7 +40,6 @@ public class Referral implements ModInitializer {
 
 		// Enregistrer la commande
 		RefCodeCommand.register();
-		RefAdminCommand.register();
 
 		LOGGER.info("Hello Fabric world!");
 	}
