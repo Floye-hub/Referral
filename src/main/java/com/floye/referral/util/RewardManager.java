@@ -5,8 +5,11 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
+import net.minecraft.registry.Registries;
+import net.minecraft.item.Item;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -18,22 +21,24 @@ public class RewardManager {
     private static final Path CLAIMED_REWARDS_PATH = FabricLoader.getInstance().getConfigDir().resolve("ref_claimed_rewards.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    // Structure pour stocker les récompenses disponibles
     private static final List<Reward> REWARDS = new ArrayList<>();
-
-    // Structure pour stocker les récompenses déjà réclamées par les joueurs
     private static final Map<String, Set<Integer>> CLAIMED_REWARDS = new HashMap<>();
 
     public static class Reward {
         public int requiredReferrals;
-        public List<String> commands; // Liste de commandes à exécuter
-        public String message; // Message à afficher au joueur
+        public List<String> commands;
+        public String message;
+        public String item;
+        public int slot;
+        public String displayName;
+        public List<String> lore;
     }
 
     public static void load() {
-        REWARDS.clear(); // Nettoyer les récompenses existantes avant rechargement
+        REWARDS.clear();
+        CLAIMED_REWARDS.clear();
 
-        // Charger la configuration des récompenses
+        // Load rewards configuration
         if (REWARDS_CONFIG_PATH.toFile().exists()) {
             try (Reader reader = new FileReader(REWARDS_CONFIG_PATH.toFile())) {
                 Type type = new TypeToken<List<Reward>>() {}.getType();
@@ -46,11 +51,10 @@ public class RewardManager {
                 e.printStackTrace();
             }
         } else {
-            // Créer un fichier de configuration par défaut si inexistant
             createDefaultRewardsConfig();
         }
 
-        // Charger les récompenses déjà réclamées
+        // Load claimed rewards
         if (CLAIMED_REWARDS_PATH.toFile().exists()) {
             try (Reader reader = new FileReader(CLAIMED_REWARDS_PATH.toFile())) {
                 Type type = new TypeToken<Map<String, Set<Integer>>>() {}.getType();
@@ -67,7 +71,7 @@ public class RewardManager {
     private static void createDefaultRewardsConfig() {
         List<Reward> defaultRewards = new ArrayList<>();
 
-        // Récompense pour 5 referrals
+        // Reward for 5 referrals
         Reward reward1 = new Reward();
         reward1.requiredReferrals = 5;
         reward1.commands = Arrays.asList(
@@ -75,9 +79,13 @@ public class RewardManager {
                 "effect give @p minecraft:strength 1200 0"
         );
         reward1.message = "Vous avez reçu 1 diamant et un effet de force pour avoir 5 referrals!";
+        reward1.item = "minecraft:diamond";
+        reward1.slot = 10;
+        reward1.displayName = "Récompense pour 5 parrainages";
+        reward1.lore = Arrays.asList("Cliquez pour réclamer", "Nécessite 5 parrainages");
         defaultRewards.add(reward1);
 
-        // Récompense pour 10 referrals
+        // Reward for 10 referrals
         Reward reward2 = new Reward();
         reward2.requiredReferrals = 10;
         reward2.commands = Arrays.asList(
@@ -86,6 +94,10 @@ public class RewardManager {
                 "effect give @p minecraft:resistance 1200 0"
         );
         reward2.message = "Vous avez reçu des blocs précieux et un effet de résistance pour 10 referrals!";
+        reward2.item = "minecraft:diamond_block";
+        reward2.slot = 16;
+        reward2.displayName = "Récompense pour 10 parrainages";
+        reward2.lore = Arrays.asList("Cliquez pour réclamer", "Nécessite 10 parrainages");
         defaultRewards.add(reward2);
 
         try (Writer writer = new FileWriter(REWARDS_CONFIG_PATH.toFile())) {
@@ -103,43 +115,53 @@ public class RewardManager {
         }
     }
 
-    public static void claimRewards(ServerCommandSource source, String playerUUID, int currentReferrals) {
+    public static void claimReward(ServerPlayerEntity player, int requiredReferrals) {
+        String playerUUID = player.getUuid().toString();
         Set<Integer> claimed = CLAIMED_REWARDS.computeIfAbsent(playerUUID, k -> new HashSet<>());
-        boolean claimedAny = false;
+
+        if (claimed.contains(requiredReferrals)) {
+            player.sendMessage(Text.literal("Vous avez déjà réclamé cette récompense!"), false);
+            return;
+        }
 
         for (Reward reward : REWARDS) {
-            if (currentReferrals >= reward.requiredReferrals && !claimed.contains(reward.requiredReferrals)) {
-                MinecraftServer server = source.getServer();
-                ServerCommandSource consoleSource = server.getCommandSource();
-                String playerName = source.getName();
+            if (reward.requiredReferrals == requiredReferrals) {
+                MinecraftServer server = player.getServer();
+                if (server == null) return;
 
-                // Exécuter toutes les commandes de la récompense
+                // Execute reward commands
                 for (String command : reward.commands) {
-                    String processedCommand = command.replace("@p", playerName);
+                    String processedCommand = command.replace("@p", player.getName().getString());
                     server.getCommandManager().executeWithPrefix(
-                            consoleSource.withSilent(),
+                            server.getCommandSource().withSilent(),
                             processedCommand
                     );
                 }
 
-                // Afficher le message au joueur
-                source.sendFeedback(() -> Text.literal(reward.message), false);
+                // Send reward message
+                player.sendMessage(Text.literal(reward.message), false);
 
-                // Marquer comme réclamé
-                claimed.add(reward.requiredReferrals);
-                claimedAny = true;
+                // Mark as claimed
+                claimed.add(requiredReferrals);
+                saveClaimedRewards();
+                return;
             }
         }
 
-        if (claimedAny) {
-            saveClaimedRewards();
-        } else {
-            source.sendFeedback(() -> Text.literal("Vous n'avez aucune récompense à réclamer pour le moment."), false);
-        }
+        player.sendMessage(Text.literal("Récompense introuvable!"), false);
     }
 
-    // Méthode utilitaire pour obtenir la liste des récompenses (optionnel)
     public static List<Reward> getRewards() {
         return Collections.unmodifiableList(REWARDS);
+    }
+
+    public static Item getRewardItem(String itemId) {
+        return Registries.ITEM.get(Identifier.of(itemId));
+    }
+
+    public static boolean hasUnclaimedRewards(String playerUUID, int referralCount) {
+        Set<Integer> claimed = CLAIMED_REWARDS.getOrDefault(playerUUID, new HashSet<>());
+        return REWARDS.stream()
+                .anyMatch(reward -> reward.requiredReferrals <= referralCount && !claimed.contains(reward.requiredReferrals));
     }
 }
