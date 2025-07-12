@@ -141,6 +141,14 @@ public class RewardManager {
 
     public static void claimReward(ServerPlayerEntity player, int requiredReferrals) {
         String playerUUID = player.getUuid().toString();
+        int currentReferrals = ReferralCounter.getCounter(playerUUID);
+
+        // Vérifier que le joueur a assez de referrals
+        if (currentReferrals < requiredReferrals) {
+            player.sendMessage(Text.literal("Vous n'avez pas assez de referrals pour cette récompense!"), false);
+            return;
+        }
+
         Set<Integer> claimed = CLAIMED_REWARDS.computeIfAbsent(playerUUID, k -> new HashSet<>());
 
         if (claimed.contains(requiredReferrals)) {
@@ -186,7 +194,7 @@ public class RewardManager {
         }
         return item;
     }
-
+    
     public static boolean hasUnclaimedRewards(String playerUUID, int referralCount) {
         Set<Integer> claimed = CLAIMED_REWARDS.getOrDefault(playerUUID, new HashSet<>());
         return REWARDS.stream()

@@ -1,9 +1,6 @@
 package com.floye.command;
 
-import com.floye.referral.util.ClaimTracker;
-import com.floye.referral.util.CodeManager;
-import com.floye.referral.util.RewardManager;
-import com.floye.referral.util.ReferralCounter;
+import com.floye.referral.util.*;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -89,8 +86,9 @@ public class RefCodeCommand {
                                 String playerUUID = player.getUuid().toString();
 
                                 int totalReferrals = ReferralCounter.getCounter(playerUUID);
-                                RewardManager.claimReward(player, totalReferrals);
 
+                                // Ouvrir le GUI des récompenses
+                                new RewardsGUI(player).open();
                                 return 1;
                             })
                     )
