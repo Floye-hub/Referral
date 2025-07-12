@@ -13,14 +13,17 @@ import net.minecraft.util.Formatting;
 public class RewardsGUI extends SimpleGui {
     private final ServerPlayerEntity player;
 
+    // Pour chaque page, on affiche 27 récompenses.
+    private int currentPage = 0;
+    private static final int PAGE_SIZE = 27; // 9x3 slots pour les récompenses
+
     public RewardsGUI(ServerPlayerEntity player) {
-        super(ScreenHandlerType.GENERIC_9X3, player, false);
+        // Utilisation d'une interface 9x4 (36 slots) afin de disposer d'espaces additionnels pour la navigation.
+        super(ScreenHandlerType.GENERIC_9X4, player, false);
         this.player = player;
         this.setTitle(Text.literal(RewardManager.getGuiTitle()));
         initializeGUI();
     }
-    private int currentPage = 0;
-    private static final int PAGE_SIZE = 27; // Taille d'une page (9x3 slots)
 
     private void initializeGUI() {
         // Remplir tous les slots avec un fond
@@ -33,11 +36,11 @@ public class RewardsGUI extends SimpleGui {
             this.setSlot(i, backgroundElement);
         }
 
-        // Calculer les récompenses à afficher pour la page actuelle
+        // Calculer l'index de début et de fin des récompenses à afficher pour la page actuelle.
         int startIndex = currentPage * PAGE_SIZE;
         int endIndex = Math.min(startIndex + PAGE_SIZE, RewardManager.getRewards().size());
 
-        // Afficher les récompenses
+        // Afficher les récompenses sur la page
         for (int i = startIndex; i < endIndex; i++) {
             RewardManager.Reward reward = RewardManager.getRewards().get(i);
             Item rewardItem = RewardManager.getRewardItem(reward.item);
@@ -57,10 +60,11 @@ public class RewardsGUI extends SimpleGui {
                 gui.close();
             });
 
-            this.setSlot(i - startIndex, element); // Afficher la récompense dans le slot correspondant
+            // Positionner la récompense dans la zone dédiée (slots 0 à 26)
+            this.setSlot(i - startIndex, element);
         }
 
-        // Ajout des boutons de navigation
+        // Bouton "Page précédente" dans le slot 27 (premier slot de la 2ème ligne, hors zone de récompenses)
         if (currentPage > 0) {
             this.setSlot(27, new GuiElementBuilder()
                     .setItem(Items.ARROW)
@@ -71,6 +75,7 @@ public class RewardsGUI extends SimpleGui {
                     }));
         }
 
+        // Bouton "Page suivante" dans le slot 35 (dernier slot de l'interface)
         if (endIndex < RewardManager.getRewards().size()) {
             this.setSlot(35, new GuiElementBuilder()
                     .setItem(Items.ARROW)
