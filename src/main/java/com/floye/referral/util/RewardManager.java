@@ -46,7 +46,10 @@ public class RewardManager {
         REWARDS.clear();
         CLAIMED_REWARDS.clear();
 
-        // Load rewards configuration
+        // Log pour indiquer le début du chargement des récompenses
+        System.out.println("[RewardManager] Début du chargement des récompenses.");
+
+        // Charger la configuration des récompenses
         if (REWARDS_CONFIG_PATH.toFile().exists()) {
             try (Reader reader = new FileReader(REWARDS_CONFIG_PATH.toFile())) {
                 Type type = new TypeToken<List<Reward>>() {}.getType();
@@ -54,21 +57,27 @@ public class RewardManager {
                 if (loadedRewards != null) {
                     REWARDS.addAll(loadedRewards);
                     REWARDS.sort(Comparator.comparingInt(r -> r.requiredReferrals));
+                    System.out.println("[RewardManager] Récompenses chargées :");
+                    for (Reward reward : REWARDS) {
+                        System.out.println("  - " + reward.displayName + " (Item: " + reward.item + ", Slot: " + reward.slot + ")");
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
         } else {
+            System.out.println("[RewardManager] Fichier de configuration non trouvé. Création du fichier par défaut.");
             createDefaultRewardsConfig();
         }
 
-        // Load claimed rewards
+        // Charger les récompenses réclamées
         if (CLAIMED_REWARDS_PATH.toFile().exists()) {
             try (Reader reader = new FileReader(CLAIMED_REWARDS_PATH.toFile())) {
                 Type type = new TypeToken<Map<String, Set<Integer>>>() {}.getType();
                 Map<String, Set<Integer>> loadedClaims = GSON.fromJson(reader, type);
                 if (loadedClaims != null) {
                     CLAIMED_REWARDS.putAll(loadedClaims);
+                    System.out.println("[RewardManager] Récompenses réclamées chargées : " + CLAIMED_REWARDS.size() + " joueurs.");
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -164,7 +173,11 @@ public class RewardManager {
     }
 
     public static Item getRewardItem(String itemId) {
-        return Registries.ITEM.get(Identifier.of(itemId));
+        Item item = Registries.ITEM.get(Identifier.of(itemId));
+        if (item == null) {
+            System.out.println("[RewardManager] Item invalide : " + itemId);
+        }
+        return item;
     }
 
     public static boolean hasUnclaimedRewards(String playerUUID, int referralCount) {
