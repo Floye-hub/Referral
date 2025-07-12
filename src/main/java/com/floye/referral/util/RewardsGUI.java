@@ -16,12 +16,14 @@ public class RewardsGUI extends SimpleGui {
     public RewardsGUI(ServerPlayerEntity player) {
         super(ScreenHandlerType.GENERIC_9X3, player, false);
         this.player = player;
-        this.setTitle(Text.literal("Récompenses de parrainage"));
+        this.setTitle(Text.literal(RewardManager.getGuiTitle()));
         initializeGUI();
     }
+    private int currentPage = 0;
+    private static final int PAGE_SIZE = 27; // Taille d'une page (9x3 slots)
 
     private void initializeGUI() {
-        // D'abord remplir tous les slots avec un fond
+        // Remplir tous les slots avec un fond
         ItemStack background = new ItemStack(Items.GRAY_STAINED_GLASS_PANE);
         GuiElementBuilder backgroundElement = new GuiElementBuilder()
                 .setItem(background.getItem())
@@ -31,8 +33,13 @@ public class RewardsGUI extends SimpleGui {
             this.setSlot(i, backgroundElement);
         }
 
-        // Puis ajouter les rewards
-        for (RewardManager.Reward reward : RewardManager.getRewards()) {
+        // Calculer les récompenses à afficher pour la page actuelle
+        int startIndex = currentPage * PAGE_SIZE;
+        int endIndex = Math.min(startIndex + PAGE_SIZE, RewardManager.getRewards().size());
+
+        // Afficher les récompenses
+        for (int i = startIndex; i < endIndex; i++) {
+            RewardManager.Reward reward = RewardManager.getRewards().get(i);
             Item rewardItem = RewardManager.getRewardItem(reward.item);
             ItemStack rewardStack = new ItemStack(rewardItem);
 
@@ -50,7 +57,28 @@ public class RewardsGUI extends SimpleGui {
                 gui.close();
             });
 
-            this.setSlot(reward.slot, element);
+            this.setSlot(i - startIndex, element); // Afficher la récompense dans le slot correspondant
+        }
+
+        // Ajout des boutons de navigation
+        if (currentPage > 0) {
+            this.setSlot(27, new GuiElementBuilder()
+                    .setItem(Items.ARROW)
+                    .setName(Text.literal("Page précédente"))
+                    .setCallback((slot, type, action, gui) -> {
+                        currentPage--;
+                        initializeGUI();
+                    }));
+        }
+
+        if (endIndex < RewardManager.getRewards().size()) {
+            this.setSlot(35, new GuiElementBuilder()
+                    .setItem(Items.ARROW)
+                    .setName(Text.literal("Page suivante"))
+                    .setCallback((slot, type, action, gui) -> {
+                        currentPage++;
+                        initializeGUI();
+                    }));
         }
     }
 

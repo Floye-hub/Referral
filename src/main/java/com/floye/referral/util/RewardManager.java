@@ -21,7 +21,7 @@ public class RewardManager {
     private static final Path REWARDS_CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("ref_rewards.json");
     private static final Path CLAIMED_REWARDS_PATH = FabricLoader.getInstance().getConfigDir().resolve("ref_claimed_rewards.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-
+    private static String guiTitle = "Récompenses de parrainage"; // Valeur par défaut
     private static final List<Reward> REWARDS = new ArrayList<>();
     private static final Map<String, Set<Integer>> CLAIMED_REWARDS = new HashMap<>();
 
@@ -32,7 +32,6 @@ public class RewardManager {
         public List<String> commands;
         public String message;
         public String item;
-        public int slot;
         public String displayName;
         public List<String> lore;
     }
@@ -46,20 +45,20 @@ public class RewardManager {
         REWARDS.clear();
         CLAIMED_REWARDS.clear();
 
-        // Log pour indiquer le début du chargement des récompenses
         System.out.println("[RewardManager] Début du chargement des récompenses.");
 
-        // Charger la configuration des récompenses
         if (REWARDS_CONFIG_PATH.toFile().exists()) {
             try (Reader reader = new FileReader(REWARDS_CONFIG_PATH.toFile())) {
-                Type type = new TypeToken<List<Reward>>() {}.getType();
-                List<Reward> loadedRewards = GSON.fromJson(reader, type);
+                Map<String, Object> config = GSON.fromJson(reader, Map.class);
+                guiTitle = (String) config.getOrDefault("guiTitle", "Récompenses de parrainage");
+
+                List<Reward> loadedRewards = GSON.fromJson(GSON.toJson(config.get("rewards")), new TypeToken<List<Reward>>() {}.getType());
                 if (loadedRewards != null) {
                     REWARDS.addAll(loadedRewards);
                     REWARDS.sort(Comparator.comparingInt(r -> r.requiredReferrals));
                     System.out.println("[RewardManager] Récompenses chargées :");
                     for (Reward reward : REWARDS) {
-                        System.out.println("  - " + reward.displayName + " (Item: " + reward.item + ", Slot: " + reward.slot + ")");
+                        System.out.println("  - " + reward.displayName + " (Item: " + reward.item + ")");
                     }
                 }
             } catch (Exception e) {
@@ -85,8 +84,15 @@ public class RewardManager {
         }
     }
 
+    public static String getGuiTitle() {
+        return guiTitle;
+    }
+
     private static void createDefaultRewardsConfig() {
         List<Reward> defaultRewards = new ArrayList<>();
+
+        // Ajout d'un titre par défaut
+        String guiTitle = "Récompenses de parrainage";
 
         // Reward for 5 referrals
         Reward reward1 = new Reward();
@@ -97,7 +103,6 @@ public class RewardManager {
         );
         reward1.message = "Vous avez reçu 1 diamant et un effet de force pour avoir 5 referrals!";
         reward1.item = "minecraft:diamond";
-        reward1.slot = 10;
         reward1.displayName = "Récompense pour 5 parrainages";
         reward1.lore = Arrays.asList("Cliquez pour réclamer", "Nécessite 5 parrainages");
         defaultRewards.add(reward1);
@@ -112,13 +117,15 @@ public class RewardManager {
         );
         reward2.message = "Vous avez reçu des blocs précieux et un effet de résistance pour 10 referrals!";
         reward2.item = "minecraft:diamond_block";
-        reward2.slot = 16;
         reward2.displayName = "Récompense pour 10 parrainages";
         reward2.lore = Arrays.asList("Cliquez pour réclamer", "Nécessite 10 parrainages");
         defaultRewards.add(reward2);
 
         try (Writer writer = new FileWriter(REWARDS_CONFIG_PATH.toFile())) {
-            GSON.toJson(defaultRewards, writer);
+            Map<String, Object> config = new HashMap<>();
+            config.put("guiTitle", guiTitle);
+            config.put("rewards", defaultRewards);
+            GSON.toJson(config, writer);
         } catch (Exception e) {
             e.printStackTrace();
         }
