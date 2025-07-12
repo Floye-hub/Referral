@@ -30,14 +30,14 @@ public class RefAdminCommand {
                             Entity entity = EntityArgumentType.getEntity(context, "playername");
 
                             if (!(entity instanceof ServerPlayerEntity)) {
-                                source.sendError(Text.literal("Le joueur spécifié n'est pas valide."));
+                                source.sendError(Text.literal("The specified player is not valid."));
                                 return 0;
                             }
 
                             ServerPlayerEntity target = (ServerPlayerEntity) entity;
                             String targetUUID = target.getUuid().toString();
                             int totalReferrals = ReferralCounter.getCounter(targetUUID);
-                            source.sendFeedback(() -> Text.literal(target.getName().getString() + " a un total de " + totalReferrals + " referral(s)."), true);
+                            source.sendFeedback(() -> Text.literal(target.getName().getString() + " has a total of " + totalReferrals + " referral(s)."), true);
                             return 1;
                         })
                 )
@@ -51,7 +51,7 @@ public class RefAdminCommand {
                     ReferralCounter.loadCounters();
                     ClaimTracker.loadClaims();
                     RewardManager.load(); // Reload RewardManager config
-                    source.sendFeedback(() -> Text.literal("Configurations rechargées."), true);
+                    source.sendFeedback(() -> Text.literal("Configurations reloaded."), true);
                     return 1;
                 })
         );
@@ -64,7 +64,7 @@ public class RefAdminCommand {
                             Entity entity = EntityArgumentType.getEntity(context, "playername");
 
                             if (!(entity instanceof ServerPlayerEntity)) {
-                                source.sendError(Text.literal("Le joueur spécifié n'est pas valide."));
+                                source.sendError(Text.literal("The specified player is not valid."));
                                 return 0;
                             }
 
@@ -79,7 +79,7 @@ public class RefAdminCommand {
                             }
 
                             String finalCode = code;
-                            source.sendFeedback(() -> Text.literal("Le code de " + target.getName().getString() + " est : " + finalCode), true);
+                            source.sendFeedback(() -> Text.literal(target.getName().getString() + "'s code is: " + finalCode), true);
                             return 1;
                         })
                 )
@@ -93,7 +93,7 @@ public class RefAdminCommand {
                             Entity entity = EntityArgumentType.getEntity(context, "playername");
 
                             if (!(entity instanceof ServerPlayerEntity)) {
-                                source.sendError(Text.literal("Le joueur spécifié n'est pas valide."));
+                                source.sendError(Text.literal("The specified player is not valid."));
                                 return 0;
                             }
 
@@ -116,7 +116,7 @@ public class RefAdminCommand {
                             Entity entity = EntityArgumentType.getEntity(context, "playername");
 
                             if (!(entity instanceof ServerPlayerEntity)) {
-                                source.sendError(Text.literal("Le joueur spécifié n'est pas valide."));
+                                source.sendError(Text.literal("The specified player is not valid."));
                                 return 0;
                             }
 
@@ -128,7 +128,7 @@ public class RefAdminCommand {
 
                             // Envoie le feedback à l'utilisateur qui a exécuté la commande
                             source.sendFeedback(
-                                    () -> Text.literal("Vous avez rajouté 1 au compteur des referrals de "
+                                    () -> Text.literal("You added 1 to the referral counter of "
                                             + target.getName().getString()),
                                     true
                             );
@@ -148,12 +148,12 @@ public class RefAdminCommand {
                                     int amount = IntegerArgumentType.getInteger(context, "amount");
 
                                     if (!(entity instanceof ServerPlayerEntity)) {
-                                        source.sendError(Text.literal("Le joueur spécifié n'est pas valide."));
+                                        source.sendError(Text.literal("The specified player is not valid."));
                                         return 0;
                                     }
 
                                     if (amount < 0) {
-                                        source.sendError(Text.literal("Le montant doit être positif."));
+                                        source.sendError(Text.literal("The amount must be positive."));
                                         return 0;
                                     }
 
@@ -162,7 +162,7 @@ public class RefAdminCommand {
                                     ReferralCounter.COUNTERS.put(targetUUID, amount);
                                     ReferralCounter.saveCounters();
 
-                                    source.sendFeedback(() -> Text.literal("Le compteur de referrals de " + target.getName().getString() + " a été défini à " + amount + "."), true);
+                                    source.sendFeedback(() -> Text.literal(target.getName().getString() + "'s referral counter has been set to " + amount + "."), true);
                                     return 1;
                                 })
                         )

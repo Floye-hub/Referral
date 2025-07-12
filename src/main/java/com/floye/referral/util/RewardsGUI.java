@@ -68,7 +68,7 @@ public class RewardsGUI extends SimpleGui {
         if (currentPage > 0) {
             this.setSlot(27, new GuiElementBuilder()
                     .setItem(Items.ARROW)
-                    .setName(Text.literal("Page précédente"))
+                    .setName(Text.literal("Previous page"))
                     .setCallback((slot, type, action, gui) -> {
                         currentPage--;
                         initializeGUI();
@@ -79,7 +79,7 @@ public class RewardsGUI extends SimpleGui {
         if (endIndex < RewardManager.getRewards().size()) {
             this.setSlot(35, new GuiElementBuilder()
                     .setItem(Items.ARROW)
-                    .setName(Text.literal("Page suivante"))
+                    .setName(Text.literal("Next page"))
                     .setCallback((slot, type, action, gui) -> {
                         currentPage++;
                         initializeGUI();

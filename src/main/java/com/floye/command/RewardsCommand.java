@@ -18,7 +18,7 @@ public class RewardsCommand {
                         // Ouvrir l'interface des rewards pour le joueur
                         new RewardsGUI(player).open();
                     } else {
-                        context.getSource().sendError(Text.literal("Seul un joueur peut exécuter cette commande."));
+                        context.getSource().sendError(Text.literal("Only a player can execute this command."));
                     }
                     return 1;
                 }));

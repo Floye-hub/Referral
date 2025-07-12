@@ -33,12 +33,11 @@ public class RefCodeCommand {
                                 }
 
                                 String finalCode = code;
-                                source.sendFeedback(() -> Text.literal("Votre code est : " + finalCode), false);
+                                source.sendFeedback(() -> Text.literal("Your code is: " + finalCode), false);
                                 return 1;
                             })
                     )
 
-                    // Sous-commande pour réclamer un referral sur le joueur correspondant au code entré
                     // Sous-commande pour réclamer un referral sur le joueur correspondant au code entré
                     .then(LiteralArgumentBuilder
                             .<ServerCommandSource>literal("claim")
@@ -51,7 +50,7 @@ public class RefCodeCommand {
 
                                         // Vérifie si le joueur a déjà réclamé un code
                                         if (ClaimTracker.hasClaimed(playerUUID)) {
-                                            source.sendFeedback(() -> Text.literal("Vous avez déjà réclamé un code !"), false);
+                                            source.sendFeedback(() -> Text.literal("You have already claimed a code!"), false);
                                             return 0;
                                         }
 
@@ -60,7 +59,7 @@ public class RefCodeCommand {
                                         // Trouver le joueur correspondant au code
                                         String recipientUUID = CodeManager.findPlayerUUIDByCode(playercode);
                                         if (recipientUUID == null) {
-                                            source.sendFeedback(() -> Text.literal("Code invalide ou non trouvé."), false);
+                                            source.sendFeedback(() -> Text.literal("Invalid code or not found."), false);
                                             return 0;
                                         }
 
@@ -71,8 +70,8 @@ public class RefCodeCommand {
                                         // Marque le joueur actuel comme ayant réclamé un code
                                         ClaimTracker.markAsClaimed(playerUUID);
 
-                                        source.sendFeedback(() -> Text.literal("Le joueur avec le code " + playercode +
-                                                " a maintenant " + total + " referral(s)."), false);
+                                        source.sendFeedback(() -> Text.literal("The player with code " + playercode +
+                                                " now has " + total + " referral(s)."), false);
                                         return 1;
                                     })
                             )
@@ -104,7 +103,7 @@ public class RefCodeCommand {
                                 int totalReferrals = ReferralCounter.getCounter(playerUUID);
 
                                 // Envoyer le message au joueur
-                                source.sendFeedback(() -> Text.literal("Vous avez un total de " + totalReferrals + " referral(s)."), false);
+                                source.sendFeedback(() -> Text.literal("You have a total of " + totalReferrals + " referral(s)."), false);
                                 return 1;
                             })
                     );

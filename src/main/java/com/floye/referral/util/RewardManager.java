@@ -21,7 +21,7 @@ public class RewardManager {
     private static final Path REWARDS_CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("ref_rewards.json");
     private static final Path CLAIMED_REWARDS_PATH = FabricLoader.getInstance().getConfigDir().resolve("ref_claimed_rewards.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static String guiTitle = "Récompenses de parrainage"; // Valeur par défaut
+    private static String guiTitle = "Referral Rewards"; // Default value
     private static final List<Reward> REWARDS = new ArrayList<>();
     private static final Map<String, Set<Integer>> CLAIMED_REWARDS = new HashMap<>();
 
@@ -45,18 +45,18 @@ public class RewardManager {
         REWARDS.clear();
         CLAIMED_REWARDS.clear();
 
-        System.out.println("[RewardManager] Début du chargement des récompenses.");
+        System.out.println("[RewardManager] Starting to load rewards.");
 
         if (REWARDS_CONFIG_PATH.toFile().exists()) {
             try (Reader reader = new FileReader(REWARDS_CONFIG_PATH.toFile())) {
                 Map<String, Object> config = GSON.fromJson(reader, Map.class);
-                guiTitle = (String) config.getOrDefault("guiTitle", "Récompenses de parrainage");
+                guiTitle = (String) config.getOrDefault("guiTitle", "Referral Rewards");
 
                 List<Reward> loadedRewards = GSON.fromJson(GSON.toJson(config.get("rewards")), new TypeToken<List<Reward>>() {}.getType());
                 if (loadedRewards != null) {
                     REWARDS.addAll(loadedRewards);
                     REWARDS.sort(Comparator.comparingInt(r -> r.requiredReferrals));
-                    System.out.println("[RewardManager] Récompenses chargées :");
+                    System.out.println("[RewardManager] Loaded rewards:");
                     for (Reward reward : REWARDS) {
                         System.out.println("  - " + reward.displayName + " (Item: " + reward.item + ")");
                     }
@@ -65,18 +65,18 @@ public class RewardManager {
                 e.printStackTrace();
             }
         } else {
-            System.out.println("[RewardManager] Fichier de configuration non trouvé. Création du fichier par défaut.");
+            System.out.println("[RewardManager] Configuration file not found. Creating default file.");
             createDefaultRewardsConfig();
         }
 
-        // Charger les récompenses réclamées
+        // Load claimed rewards
         if (CLAIMED_REWARDS_PATH.toFile().exists()) {
             try (Reader reader = new FileReader(CLAIMED_REWARDS_PATH.toFile())) {
                 Type type = new TypeToken<Map<String, Set<Integer>>>() {}.getType();
                 Map<String, Set<Integer>> loadedClaims = GSON.fromJson(reader, type);
                 if (loadedClaims != null) {
                     CLAIMED_REWARDS.putAll(loadedClaims);
-                    System.out.println("[RewardManager] Récompenses réclamées chargées : " + CLAIMED_REWARDS.size() + " joueurs.");
+                    System.out.println("[RewardManager] Claimed rewards loaded: " + CLAIMED_REWARDS.size() + " players.");
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -91,8 +91,8 @@ public class RewardManager {
     private static void createDefaultRewardsConfig() {
         List<Reward> defaultRewards = new ArrayList<>();
 
-        // Ajout d'un titre par défaut
-        String guiTitle = "Récompenses de parrainage";
+        // Add default title
+        String guiTitle = "Referral Rewards";
 
         // Reward for 5 referrals
         Reward reward1 = new Reward();
@@ -101,10 +101,10 @@ public class RewardManager {
                 "give @p minecraft:diamond 1",
                 "effect give @p minecraft:strength 1200 0"
         );
-        reward1.message = "Vous avez reçu 1 diamant et un effet de force pour avoir 5 referrals!";
+        reward1.message = "You received 1 diamond and a strength effect for having 5 referrals!";
         reward1.item = "minecraft:diamond";
-        reward1.displayName = "Récompense pour 5 parrainages";
-        reward1.lore = Arrays.asList("Cliquez pour réclamer", "Nécessite 5 parrainages");
+        reward1.displayName = "Reward for 5 referrals";
+        reward1.lore = Arrays.asList("Click to claim", "Requires 5 referrals");
         defaultRewards.add(reward1);
 
         // Reward for 10 referrals
@@ -115,10 +115,10 @@ public class RewardManager {
                 "give @p minecraft:emerald_block 1",
                 "effect give @p minecraft:resistance 1200 0"
         );
-        reward2.message = "Vous avez reçu des blocs précieux et un effet de résistance pour 10 referrals!";
+        reward2.message = "You received precious blocks and a resistance effect for 10 referrals!";
         reward2.item = "minecraft:diamond_block";
-        reward2.displayName = "Récompense pour 10 parrainages";
-        reward2.lore = Arrays.asList("Cliquez pour réclamer", "Nécessite 10 parrainages");
+        reward2.displayName = "Reward for 10 referrals";
+        reward2.lore = Arrays.asList("Click to claim", "Requires 10 referrals");
         defaultRewards.add(reward2);
 
         try (Writer writer = new FileWriter(REWARDS_CONFIG_PATH.toFile())) {
@@ -143,16 +143,16 @@ public class RewardManager {
         String playerUUID = player.getUuid().toString();
         int currentReferrals = ReferralCounter.getCounter(playerUUID);
 
-        // Vérifier que le joueur a assez de referrals
+        // Check if player has enough referrals
         if (currentReferrals < requiredReferrals) {
-            player.sendMessage(Text.literal("Vous n'avez pas assez de referrals pour cette récompense!"), false);
+            player.sendMessage(Text.literal("You don't have enough referrals for this reward!"), false);
             return;
         }
 
         Set<Integer> claimed = CLAIMED_REWARDS.computeIfAbsent(playerUUID, k -> new HashSet<>());
 
         if (claimed.contains(requiredReferrals)) {
-            player.sendMessage(Text.literal("Vous avez déjà réclamé cette récompense!"), false);
+            player.sendMessage(Text.literal("You have already claimed this reward!"), false);
             return;
         }
 
@@ -180,7 +180,7 @@ public class RewardManager {
             }
         }
 
-        player.sendMessage(Text.literal("Récompense introuvable!"), false);
+        player.sendMessage(Text.literal("Reward not found!"), false);
     }
 
     public static List<Reward> getRewards() {
@@ -190,11 +190,11 @@ public class RewardManager {
     public static Item getRewardItem(String itemId) {
         Item item = Registries.ITEM.get(Identifier.of(itemId));
         if (item == null) {
-            System.out.println("[RewardManager] Item invalide : " + itemId);
+            System.out.println("[RewardManager] Invalid item: " + itemId);
         }
         return item;
     }
-    
+
     public static boolean hasUnclaimedRewards(String playerUUID, int referralCount) {
         Set<Integer> claimed = CLAIMED_REWARDS.getOrDefault(playerUUID, new HashSet<>());
         return REWARDS.stream()
