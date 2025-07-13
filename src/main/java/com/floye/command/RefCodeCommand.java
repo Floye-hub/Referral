@@ -8,6 +8,7 @@ import net.minecraft.text.Text;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import net.minecraft.stat.Stats;
 
 public class RefCodeCommand {
 
@@ -47,6 +48,12 @@ public class RefCodeCommand {
                                         ServerCommandSource source = context.getSource();
                                         ServerPlayerEntity player = source.getPlayerOrThrow();
                                         String playerUUID = player.getUuid().toString();
+
+                                        // Vérifie le temps de jeu
+                                        if (!hasValidPlayTime(player)) {
+                                            source.sendFeedback(() -> Text.literal("You must have played between 30 minutes and 12 hours to claim a referral code!"), false);
+                                            return 0;
+                                        }
 
                                         // Vérifie si le joueur a déjà réclamé un code
                                         if (ClaimTracker.hasClaimed(playerUUID)) {
@@ -111,4 +118,16 @@ public class RefCodeCommand {
             dispatcher.register(refNode);
         });
     }
+
+    private static boolean hasValidPlayTime(ServerPlayerEntity player) {
+        // 30 minutes en ticks (20 ticks/second * 60 seconds/minute * 30 minutes)
+        long minPlayTime = 20 * 60 * 30;
+        // 12 heures en ticks (20 * 60 * 60 * 12)
+        long maxPlayTime = 20 * 60 * 60 * 12;
+
+        long playerPlayTime = player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME));
+
+        return playerPlayTime >= minPlayTime && playerPlayTime <= maxPlayTime;
+    }
+
 }
