@@ -9,7 +9,7 @@ import java.nio.file.*;
 import java.util.*;
 
 public class CodeManager {
-    private static final Path CODES_PATH = FabricLoader.getInstance().getConfigDir().resolve("ref_codes.json");
+    private static final Path CODES_PATH = FabricLoader.getInstance().getConfigDir().resolve("referral/ref_codes.json");
     private static final File CODES_FILE = CODES_PATH.toFile();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Map<String, String> CODES = new HashMap<>();

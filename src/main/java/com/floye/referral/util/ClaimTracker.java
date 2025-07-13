@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ClaimTracker {
-    private static final Path CLAIMS_PATH = FabricLoader.getInstance().getConfigDir().resolve("ref_claims.json");
+    private static final Path CLAIMS_PATH = FabricLoader.getInstance().getConfigDir().resolve("referral/ref_claims.json");
     private static final File CLAIMS_FILE = CLAIMS_PATH.toFile();
     private static final Gson GSON = new Gson();
     private static final Set<String> CLAIMED_PLAYERS = new HashSet<>();

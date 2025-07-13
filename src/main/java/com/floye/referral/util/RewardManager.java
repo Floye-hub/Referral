@@ -18,8 +18,8 @@ import java.nio.file.Path;
 import java.util.*;
 
 public class RewardManager {
-    private static final Path REWARDS_CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("ref_rewards.json");
-    private static final Path CLAIMED_REWARDS_PATH = FabricLoader.getInstance().getConfigDir().resolve("ref_claimed_rewards.json");
+    private static final Path REWARDS_CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("referral/ref_rewards.json");
+    private static final Path CLAIMED_REWARDS_PATH = FabricLoader.getInstance().getConfigDir().resolve("referral/ref_claimed_rewards.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static String guiTitle = "Referral Rewards"; // Default value
     private static final List<Reward> REWARDS = new ArrayList<>();
@@ -121,11 +121,25 @@ public class RewardManager {
         reward2.lore = Arrays.asList("Click to claim", "Requires 10 referrals");
         defaultRewards.add(reward2);
 
-        try (Writer writer = new FileWriter(REWARDS_CONFIG_PATH.toFile())) {
-            Map<String, Object> config = new HashMap<>();
-            config.put("guiTitle", guiTitle);
-            config.put("rewards", defaultRewards);
-            GSON.toJson(config, writer);
+        try {
+            // Ensure directory exists
+            File parentDir = REWARDS_CONFIG_PATH.getParent().toFile();
+            if (!parentDir.exists()) {
+                boolean created = parentDir.mkdirs();
+                if (!created) {
+                    System.err.println("[RewardManager] Failed to create config directory: " + parentDir);
+                    return;
+                }
+            }
+
+            // Write default config
+            try (Writer writer = new FileWriter(REWARDS_CONFIG_PATH.toFile())) {
+                Map<String, Object> config = new HashMap<>();
+                config.put("guiTitle", guiTitle);
+                config.put("rewards", defaultRewards);
+                GSON.toJson(config, writer);
+                System.out.println("[RewardManager] Default config created at: " + REWARDS_CONFIG_PATH);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
