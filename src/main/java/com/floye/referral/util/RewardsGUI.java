@@ -10,6 +10,10 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 public class RewardsGUI extends SimpleGui {
     private final ServerPlayerEntity player;
 
@@ -36,13 +40,17 @@ public class RewardsGUI extends SimpleGui {
             this.setSlot(i, backgroundElement);
         }
 
+        // Récupérer toutes les récompenses (spécifiques + loop)
+        int playerReferrals = ReferralCounter.getCounter(player.getUuid().toString());
+        List<RewardManager.Reward> allRewards = RewardManager.getAllRewards(playerReferrals);
+
         // Calculer l'index de début et de fin des récompenses à afficher pour la page actuelle.
         int startIndex = currentPage * PAGE_SIZE;
-        int endIndex = Math.min(startIndex + PAGE_SIZE, RewardManager.getRewards().size());
+        int endIndex = Math.min(startIndex + PAGE_SIZE, allRewards.size());
 
         // Afficher les récompenses sur la page
         for (int i = startIndex; i < endIndex; i++) {
-            RewardManager.Reward reward = RewardManager.getRewards().get(i);
+            RewardManager.Reward reward = allRewards.get(i);
             Item rewardItem = RewardManager.getRewardItem(reward.item);
             ItemStack rewardStack = new ItemStack(rewardItem);
 
@@ -55,16 +63,31 @@ public class RewardsGUI extends SimpleGui {
                 }
             }
 
-            element.setCallback((slot, type, action, gui) -> {
-                RewardManager.claimReward(player, reward.requiredReferrals);
-                gui.close();
-            });
+            // Vérifier si le joueur peut réclamer cette récompense
+            String playerUUID = player.getUuid().toString();
+            int currentReferrals = ReferralCounter.getCounter(playerUUID);
+            Set<Integer> claimed = RewardManager.getClaimedRewards().getOrDefault(playerUUID, new HashSet<>());
 
-            // Positionner la récompense dans la zone dédiée (slots 0 à 26)
+            if (currentReferrals >= reward.requiredReferrals && !claimed.contains(reward.requiredReferrals)) {
+                element.setCallback((slot, type, action, gui) -> {
+                    RewardManager.claimReward(player, reward.requiredReferrals);
+                    gui.close();
+                });
+                element.glow(true);
+            } else {
+                // Si la récompense n'est pas disponible, afficher en grisé
+                element.setItem(Items.GRAY_DYE);
+                if (currentReferrals < reward.requiredReferrals) {
+                    element.addLoreLine(Text.literal("Requires " + reward.requiredReferrals + " referrals").formatted(Formatting.RED));
+                } else {
+                    element.addLoreLine(Text.literal("Already claimed").formatted(Formatting.RED));
+                }
+            }
+
             this.setSlot(i - startIndex, element);
         }
 
-        // Bouton "Page précédente" dans le slot 27 (premier slot de la 2ème ligne, hors zone de récompenses)
+        // Bouton "Page précédente" dans le slot 27
         if (currentPage > 0) {
             this.setSlot(27, new GuiElementBuilder()
                     .setItem(Items.ARROW)
@@ -75,8 +98,8 @@ public class RewardsGUI extends SimpleGui {
                     }));
         }
 
-        // Bouton "Page suivante" dans le slot 35 (dernier slot de l'interface)
-        if (endIndex < RewardManager.getRewards().size()) {
+        // Bouton "Page suivante" dans le slot 35
+        if (endIndex < allRewards.size()) {
             this.setSlot(35, new GuiElementBuilder()
                     .setItem(Items.ARROW)
                     .setName(Text.literal("Next page"))

@@ -50,8 +50,8 @@ public class RefCodeCommand {
                                         String playerUUID = player.getUuid().toString();
 
                                         // Vérifie le temps de jeu
-                                        if (!hasValidPlayTime(player)) {
-                                            source.sendFeedback(() -> Text.literal("You must have played between 30 minutes and 12 hours to claim a referral code!"), false);
+                                        if (!PlayTimeConfig.hasValidPlayTime(player)) {
+                                            source.sendFeedback(() -> Text.literal("You must have played between " + PlayTimeConfig.getMinPlayTimeTicks()/20/60 + " minutes and " + PlayTimeConfig.getMaxPlayTimeTicks()/20/60/60 + " hours to claim a referral code!"), false);
                                             return 0;
                                         }
 

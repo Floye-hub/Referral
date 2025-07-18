@@ -24,8 +24,28 @@ public class RewardManager {
     private static String guiTitle = "Referral Rewards"; // Default value
     private static final List<Reward> REWARDS = new ArrayList<>();
     private static final Map<String, Set<Integer>> CLAIMED_REWARDS = new HashMap<>();
+    private static final List<Reward> REWARD_LOOPS = new ArrayList<>();
 
+    static {
+        // Définir les récompenses du loop
+        Reward loop1 = new Reward();
+        loop1.requiredReferrals = 0; // Pas utilisé dans le loop
+        loop1.commands = Arrays.asList("give @p minecraft:emerald 1");
+        loop1.message = "You received an emerald for your referral!";
+        loop1.item = "minecraft:emerald";
+        loop1.displayName = "Basic Referral Reward";
+        loop1.lore = Arrays.asList("Standard reward for referrals");
+        REWARD_LOOPS.add(loop1);
 
+        Reward loop2 = new Reward();
+        loop2.requiredReferrals = 0; // Pas utilisé dans le loop
+        loop2.commands = Arrays.asList("give @p minecraft:gold_ingot 2");
+        loop2.message = "You received gold ingots for your referral!";
+        loop2.item = "minecraft:gold_ingot";
+        loop2.displayName = "Alternate Referral Reward";
+        loop2.lore = Arrays.asList("Alternate standard reward");
+        REWARD_LOOPS.add(loop2);
+    }
 
     public static class Reward {
         public int requiredReferrals;
@@ -35,7 +55,11 @@ public class RewardManager {
         public String displayName;
         public List<String> lore;
     }
-
+    public static class RewardConfig {
+        public String guiTitle;
+        public List<Reward> rewards;
+        public List<Reward> loopRewards; // Nouveau champ pour les rewards de loop
+    }
     public static ItemStack getRewardItemStack(Reward reward) {
         Item rewardItem = getRewardItem(reward.item);
         return new ItemStack(rewardItem);
@@ -43,24 +67,27 @@ public class RewardManager {
 
     public static void load() {
         REWARDS.clear();
+        REWARD_LOOPS.clear(); // Vider les anciens loop rewards
         CLAIMED_REWARDS.clear();
 
         System.out.println("[RewardManager] Starting to load rewards.");
 
         if (REWARDS_CONFIG_PATH.toFile().exists()) {
             try (Reader reader = new FileReader(REWARDS_CONFIG_PATH.toFile())) {
-                Map<String, Object> config = GSON.fromJson(reader, Map.class);
-                guiTitle = (String) config.getOrDefault("guiTitle", "Referral Rewards");
+                RewardConfig config = GSON.fromJson(reader, RewardConfig.class);
 
-                List<Reward> loadedRewards = GSON.fromJson(GSON.toJson(config.get("rewards")), new TypeToken<List<Reward>>() {}.getType());
-                if (loadedRewards != null) {
-                    REWARDS.addAll(loadedRewards);
+                guiTitle = config.guiTitle != null ? config.guiTitle : "Referral Rewards";
+
+                if (config.rewards != null) {
+                    REWARDS.addAll(config.rewards);
                     REWARDS.sort(Comparator.comparingInt(r -> r.requiredReferrals));
-                    System.out.println("[RewardManager] Loaded rewards:");
-                    for (Reward reward : REWARDS) {
-                        System.out.println("  - " + reward.displayName + " (Item: " + reward.item + ")");
-                    }
                 }
+
+                if (config.loopRewards != null && !config.loopRewards.isEmpty()) {
+                    REWARD_LOOPS.addAll(config.loopRewards);
+                    System.out.println("[RewardManager] Loaded " + REWARD_LOOPS.size() + " loop rewards");
+                }
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -89,6 +116,7 @@ public class RewardManager {
     }
 
     private static void createDefaultRewardsConfig() {
+        RewardConfig Rconfig = new RewardConfig();
         List<Reward> defaultRewards = new ArrayList<>();
 
         // Add default title
@@ -120,6 +148,28 @@ public class RewardManager {
         reward2.displayName = "Reward for 10 referrals";
         reward2.lore = Arrays.asList("Click to claim", "Requires 10 referrals");
         defaultRewards.add(reward2);
+
+        List<Reward> defaultLoopRewards = new ArrayList<>();
+
+        Reward loop1 = new Reward();
+        loop1.requiredReferrals = 0; // Non utilisé pour les loops
+        loop1.commands = Arrays.asList("give @p minecraft:emerald 1");
+        loop1.message = "You received an emerald for your referral!";
+        loop1.item = "minecraft:emerald";
+        loop1.displayName = "Basic Referral Reward";
+        loop1.lore = Arrays.asList("Standard reward for referrals");
+        defaultLoopRewards.add(loop1);
+
+        Reward loop2 = new Reward();
+        loop2.requiredReferrals = 0; // Non utilisé pour les loops
+        loop2.commands = Arrays.asList("give @p minecraft:gold_ingot 2");
+        loop2.message = "You received gold ingots for your referral!";
+        loop2.item = "minecraft:gold_ingot";
+        loop2.displayName = "Alternate Referral Reward";
+        loop2.lore = Arrays.asList("Alternate standard reward");
+        defaultLoopRewards.add(loop2);
+
+        Rconfig.loopRewards = defaultLoopRewards;
 
         try {
             // Ensure directory exists
@@ -170,37 +220,88 @@ public class RewardManager {
             return;
         }
 
+        Reward reward = getRewardForReferrals(requiredReferrals);
+        if (reward == null) {
+            player.sendMessage(Text.literal("Reward not found!"), false);
+            return;
+        }
+
+        MinecraftServer server = player.getServer();
+        if (server == null) return;
+
+        // Execute reward commands
+        for (String command : reward.commands) {
+            String processedCommand = command.replace("@p", player.getName().getString());
+            server.getCommandManager().executeWithPrefix(
+                    server.getCommandSource().withSilent(),
+                    processedCommand
+            );
+        }
+
+        // Send reward message
+        player.sendMessage(Text.literal(reward.message), false);
+
+        // Mark as claimed
+        claimed.add(requiredReferrals);
+        saveClaimedRewards();
+    }
+
+    private static Reward getRewardForReferrals(int requiredReferrals) {
+        // D'abord chercher une récompense spécifique
         for (Reward reward : REWARDS) {
             if (reward.requiredReferrals == requiredReferrals) {
-                MinecraftServer server = player.getServer();
-                if (server == null) return;
-
-                // Execute reward commands
-                for (String command : reward.commands) {
-                    String processedCommand = command.replace("@p", player.getName().getString());
-                    server.getCommandManager().executeWithPrefix(
-                            server.getCommandSource().withSilent(),
-                            processedCommand
-                    );
-                }
-
-                // Send reward message
-                player.sendMessage(Text.literal(reward.message), false);
-
-                // Mark as claimed
-                claimed.add(requiredReferrals);
-                saveClaimedRewards();
-                return;
+                return reward;
             }
         }
 
-        player.sendMessage(Text.literal("Reward not found!"), false);
+        // Si aucune récompense spécifique, utiliser le reward loop
+        if (!REWARD_LOOPS.isEmpty()) {
+            int loopIndex = (requiredReferrals - 1) % REWARD_LOOPS.size(); // -1 pour commencer à 0
+            return REWARD_LOOPS.get(loopIndex);
+        }
+
+        return null;
     }
 
     public static List<Reward> getRewards() {
         return Collections.unmodifiableList(REWARDS);
     }
+    public static Map<String, Set<Integer>> getClaimedRewards() {
+        return CLAIMED_REWARDS;
+    }
+    public static List<Reward> getAllRewards(int maxReferrals) {
+        List<Reward> allRewards = new ArrayList<>();
 
+        // Ajouter d'abord toutes les récompenses spécifiques
+        allRewards.addAll(REWARDS);
+
+        // Ajouter les récompenses du loop pour les referrals sans récompense spécifique
+        if (!REWARD_LOOPS.isEmpty()) {
+            for (int i = 1; i <= maxReferrals; i++) {
+                final int currentRef = i;
+                boolean hasSpecificReward = REWARDS.stream().anyMatch(r -> r.requiredReferrals == currentRef);
+                if (!hasSpecificReward) {
+                    Reward loopReward = getRewardForReferrals(currentRef);
+                    if (loopReward != null) {
+                        // Créer une copie pour éviter de modifier l'original
+                        Reward copy = new Reward();
+                        copy.requiredReferrals = currentRef;
+                        copy.commands = new ArrayList<>(loopReward.commands);
+                        copy.message = loopReward.message;
+                        copy.item = loopReward.item;
+                        copy.displayName = "Referral " + currentRef + " - " + loopReward.displayName;
+                        copy.lore = new ArrayList<>(loopReward.lore);
+                        copy.lore.add("Automatic reward for referral " + currentRef);
+                        allRewards.add(copy);
+                    }
+                }
+            }
+        }
+
+        // Trier par nombre de referrals requis
+        allRewards.sort(Comparator.comparingInt(r -> r.requiredReferrals));
+        return allRewards;
+    }
     public static Item getRewardItem(String itemId) {
         Item item = Registries.ITEM.get(Identifier.of(itemId));
         if (item == null) {
@@ -211,7 +312,25 @@ public class RewardManager {
 
     public static boolean hasUnclaimedRewards(String playerUUID, int referralCount) {
         Set<Integer> claimed = CLAIMED_REWARDS.getOrDefault(playerUUID, new HashSet<>());
-        return REWARDS.stream()
+
+        // Vérifier d'abord les récompenses spécifiques
+        boolean hasSpecificRewards = REWARDS.stream()
                 .anyMatch(reward -> reward.requiredReferrals <= referralCount && !claimed.contains(reward.requiredReferrals));
+
+        if (hasSpecificRewards) {
+            return true;
+        }
+
+        // Vérifier le reward loop pour les referrals sans récompense spécifique
+        if (!REWARD_LOOPS.isEmpty()) {
+            for (int i = 1; i <= referralCount; i++) {
+                int finalI = i;
+                if (!claimed.contains(i) && REWARDS.stream().noneMatch(r -> r.requiredReferrals == finalI)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

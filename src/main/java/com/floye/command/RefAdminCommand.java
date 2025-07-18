@@ -1,9 +1,6 @@
 package com.floye.command;
 
-import com.floye.referral.util.ClaimTracker;
-import com.floye.referral.util.CodeManager;
-import com.floye.referral.util.ReferralCounter;
-import com.floye.referral.util.RewardManager;
+import com.floye.referral.util.*;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import net.minecraft.server.command.ServerCommandSource;
@@ -51,6 +48,7 @@ public class RefAdminCommand {
                     ReferralCounter.loadCounters();
                     ClaimTracker.loadClaims();
                     RewardManager.load(); // Reload RewardManager config
+                    PlayTimeConfig.loadConfig(); // Reload PlayTimeConfig
                     source.sendFeedback(() -> Text.literal("Configurations reloaded."), true);
                     return 1;
                 })

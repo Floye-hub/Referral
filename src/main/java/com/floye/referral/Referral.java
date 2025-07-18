@@ -12,6 +12,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.floye.referral.util.PlayTimeConfig;
 
 public class Referral implements ModInitializer {
 	public static final String MOD_ID = "referral";
@@ -39,6 +40,9 @@ public class Referral implements ModInitializer {
 
 		// Charger la configuration des récompenses
 		RewardManager.load(); // Ajout de l'appel à RewardManager.load()
+
+		// Enregistre la configuration du temps de jeu
+		PlayTimeConfig.loadConfig();
 
 		// Enregistrer la commande
 		RefCodeCommand.register();
