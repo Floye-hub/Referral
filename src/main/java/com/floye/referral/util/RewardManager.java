@@ -16,6 +16,7 @@ import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class RewardManager {
     private static final Path REWARDS_CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("referral/ref_rewards.json");
@@ -186,31 +187,18 @@ public class RewardManager {
 
     public static List<Reward> getVisibleRewards(String playerUUID) {
         int playerReferrals = ReferralCounter.getCounter(playerUUID);
-        // Récupérer la liste complète des récompenses triée par requiredReferrals.
         List<Reward> allRewards = getAllRewards(playerReferrals);
         Set<Integer> claimed = getClaimedRewards().getOrDefault(playerUUID, new HashSet<>());
 
-        // Déterminer l'index de la première récompense non réclamée.
-        int startIndex = 0;
-        for (int i = 0; i < allRewards.size(); i++) {
-            // On considère ici que reward.requiredReferrals identifie la récompense de façon unique.
-            if (!claimed.contains(allRewards.get(i).requiredReferrals)) {
-                startIndex = i;
-                break;
-            }
-        }
+        // Filter to only show unclaimed rewards
+        List<Reward> unclaimedRewards = allRewards.stream()
+                .filter(reward -> !claimed.contains(reward.requiredReferrals))
+                .toList();
 
-        // Préparer la liste contenant 5 récompenses
-        List<Reward> visibleRewards = new ArrayList<>();
-        int count = 0;
-        int index = startIndex;
-        while (count < 5) {
-            // Pour gérer le cas où la liste totale est plus courte que 5, on boucle (si c'est voulu)
-            visibleRewards.add(allRewards.get(index % allRewards.size()));
-            index++;
-            count++;
-        }
-        return visibleRewards;
+        // Return up to 5 unclaimed rewards in order
+        return unclaimedRewards.stream()
+                .limit(5)
+                .collect(Collectors.toList());
     }
 
     public static void claimReward(ServerPlayerEntity player, int requiredReferrals) {
@@ -279,39 +267,50 @@ public class RewardManager {
     public static Map<String, Set<Integer>> getClaimedRewards() {
         return CLAIMED_REWARDS;
     }
-    public static List<Reward> getAllRewards(int maxReferrals) {
+    public static List<Reward> getAllRewards(int playerReferrals) {
         List<Reward> allRewards = new ArrayList<>();
 
-        // Ajouter d'abord toutes les récompenses spécifiques
-        allRewards.addAll(REWARDS);
+        // Déterminer le niveau maximal à afficher :
+        // On prend le maximum entre le nombre de referrals du joueur et
+        // le requiredReferrals maximum défini dans les rewards spécifiques.
+        int maxDefinedReward = REWARDS.stream()
+                .mapToInt(r -> r.requiredReferrals)
+                .max()
+                .orElse(0);
+        int maxDisplay = Math.max(playerReferrals, maxDefinedReward);
 
-        // Ajouter les récompenses du loop pour les referrals sans récompense spécifique
-        if (!REWARD_LOOPS.isEmpty()) {
-            for (int i = 1; i <= maxReferrals; i++) {
-                final int currentRef = i;
-                boolean hasSpecificReward = REWARDS.stream().anyMatch(r -> r.requiredReferrals == currentRef);
-                if (!hasSpecificReward) {
-                    Reward loopReward = getRewardForReferrals(currentRef);
-                    if (loopReward != null) {
-                        // Créer une copie pour éviter de modifier l'original
-                        Reward copy = new Reward();
-                        copy.requiredReferrals = currentRef;
-                        copy.commands = new ArrayList<>(loopReward.commands);
-                        copy.message = loopReward.message;
-                        copy.item = loopReward.item;
-                        copy.displayName = "Referral " + currentRef + " - " + loopReward.displayName;
-                        copy.lore = new ArrayList<>(loopReward.lore);
-                        copy.lore.add("Automatic reward for referral " + currentRef);
-                        allRewards.add(copy);
-                    }
+        // Pour chaque niveau de 1 à maxDisplay, génère la reward correspondante.
+        for (int i = 1; i <= maxDisplay; i++) {
+            final int currentRef = i;
+            // Si une reward spécifique est définie pour ce niveau, l'ajouter
+            Optional<Reward> specificReward = REWARDS.stream()
+                    .filter(r -> r.requiredReferrals == currentRef)
+                    .findFirst();
+            if (specificReward.isPresent()) {
+                allRewards.add(specificReward.get());
+            }
+            // Sinon, si une loop reward est disponible, l'ajouter en lui assignant currentRef
+            else if (!REWARD_LOOPS.isEmpty()) {
+                Reward baseLoopReward = getRewardForReferrals(currentRef);
+                if (baseLoopReward != null) {
+                    Reward copy = new Reward();
+                    copy.requiredReferrals = currentRef; // attribuer dynamiquement le niveau
+                    copy.commands = new ArrayList<>(baseLoopReward.commands);
+                    copy.message = baseLoopReward.message;
+                    copy.item = baseLoopReward.item;
+                    copy.displayName = "Referral " + currentRef + " - " + baseLoopReward.displayName;
+                    copy.lore = new ArrayList<>(baseLoopReward.lore);
+                    copy.lore.add("Automatic reward for referral " + currentRef);
+                    allRewards.add(copy);
                 }
             }
         }
 
-        // Trier par nombre de referrals requis
-        allRewards.sort(Comparator.comparingInt(r -> r.requiredReferrals));
+        // Tri optionnel par ordre croissant (ici déjà généré dans l'ordre)
+        // allRewards.sort(Comparator.comparingInt(r -> r.requiredReferrals));
         return allRewards;
     }
+
     public static Item getRewardItem(String itemId) {
         Item item = Registries.ITEM.get(Identifier.of(itemId));
         if (item == null) {

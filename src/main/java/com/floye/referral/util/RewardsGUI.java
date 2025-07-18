@@ -23,7 +23,7 @@ public class RewardsGUI extends SimpleGui {
 
     public RewardsGUI(ServerPlayerEntity player) {
         // Utilisation d'une interface 9x4 (36 slots) afin de disposer d'espaces additionnels pour la navigation.
-        super(ScreenHandlerType.GENERIC_9X4, player, false);
+        super(ScreenHandlerType.GENERIC_9X3, player, false);
         this.player = player;
         this.setTitle(Text.literal(RewardManager.getGuiTitle()));
         initializeGUI();
@@ -43,13 +43,12 @@ public class RewardsGUI extends SimpleGui {
         // Utiliser la méthode getVisibleRewards pour obtenir une fenêtre de 5 récompenses
         String playerUUID = player.getUuid().toString();
         List<RewardManager.Reward> visibleRewards = RewardManager.getVisibleRewards(playerUUID);
-        int playerReferrals = ReferralCounter.getCounter(player.getUuid().toString());
-        List<RewardManager.Reward> allRewards = RewardManager.getAllRewards(playerReferrals);
-        int startIndex = currentPage * PAGE_SIZE;
-        int endIndex = Math.min(startIndex + PAGE_SIZE, allRewards.size());
+
+        int[] rewardSlots = new int[]{11, 12, 13, 14, 15};
+
 
         // Afficher chacune des 5 récompenses dans les 5 premiers slots (ou adapter selon votre design)
-        for (int i = 0; i < visibleRewards.size(); i++) {
+        for (int i = 0; i < visibleRewards.size() && i < rewardSlots.length; i++) {
             RewardManager.Reward reward = visibleRewards.get(i);
             Item rewardItem = RewardManager.getRewardItem(reward.item);
             ItemStack rewardStack = new ItemStack(rewardItem);
@@ -86,26 +85,7 @@ public class RewardsGUI extends SimpleGui {
         }
 
         // Bouton "Page précédente" dans le slot 27
-        if (currentPage > 0) {
-            this.setSlot(27, new GuiElementBuilder()
-                    .setItem(Items.ARROW)
-                    .setName(Text.literal("Previous page"))
-                    .setCallback((slot, type, action, gui) -> {
-                        currentPage--;
-                        initializeGUI();
-                    }));
-        }
 
-        // Bouton "Page suivante" dans le slot 35
-        if (endIndex < allRewards.size()) {
-            this.setSlot(35, new GuiElementBuilder()
-                    .setItem(Items.ARROW)
-                    .setName(Text.literal("Next page"))
-                    .setCallback((slot, type, action, gui) -> {
-                        currentPage++;
-                        initializeGUI();
-                    }));
-        }
     }
 
     @Override
