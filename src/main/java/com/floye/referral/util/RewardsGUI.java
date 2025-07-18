@@ -40,17 +40,17 @@ public class RewardsGUI extends SimpleGui {
             this.setSlot(i, backgroundElement);
         }
 
-        // Récupérer toutes les récompenses (spécifiques + loop)
+        // Utiliser la méthode getVisibleRewards pour obtenir une fenêtre de 5 récompenses
+        String playerUUID = player.getUuid().toString();
+        List<RewardManager.Reward> visibleRewards = RewardManager.getVisibleRewards(playerUUID);
         int playerReferrals = ReferralCounter.getCounter(player.getUuid().toString());
         List<RewardManager.Reward> allRewards = RewardManager.getAllRewards(playerReferrals);
-
-        // Calculer l'index de début et de fin des récompenses à afficher pour la page actuelle.
         int startIndex = currentPage * PAGE_SIZE;
         int endIndex = Math.min(startIndex + PAGE_SIZE, allRewards.size());
 
-        // Afficher les récompenses sur la page
-        for (int i = startIndex; i < endIndex; i++) {
-            RewardManager.Reward reward = allRewards.get(i);
+        // Afficher chacune des 5 récompenses dans les 5 premiers slots (ou adapter selon votre design)
+        for (int i = 0; i < visibleRewards.size(); i++) {
+            RewardManager.Reward reward = visibleRewards.get(i);
             Item rewardItem = RewardManager.getRewardItem(reward.item);
             ItemStack rewardStack = new ItemStack(rewardItem);
 
@@ -64,7 +64,6 @@ public class RewardsGUI extends SimpleGui {
             }
 
             // Vérifier si le joueur peut réclamer cette récompense
-            String playerUUID = player.getUuid().toString();
             int currentReferrals = ReferralCounter.getCounter(playerUUID);
             Set<Integer> claimed = RewardManager.getClaimedRewards().getOrDefault(playerUUID, new HashSet<>());
 
@@ -83,8 +82,7 @@ public class RewardsGUI extends SimpleGui {
                     element.addLoreLine(Text.literal("Already claimed").formatted(Formatting.RED));
                 }
             }
-
-            this.setSlot(i - startIndex, element);
+            this.setSlot(i, element);
         }
 
         // Bouton "Page précédente" dans le slot 27

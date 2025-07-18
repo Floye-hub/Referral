@@ -184,6 +184,35 @@ public class RewardManager {
         }
     }
 
+    public static List<Reward> getVisibleRewards(String playerUUID) {
+        int playerReferrals = ReferralCounter.getCounter(playerUUID);
+        // Récupérer la liste complète des récompenses triée par requiredReferrals.
+        List<Reward> allRewards = getAllRewards(playerReferrals);
+        Set<Integer> claimed = getClaimedRewards().getOrDefault(playerUUID, new HashSet<>());
+
+        // Déterminer l'index de la première récompense non réclamée.
+        int startIndex = 0;
+        for (int i = 0; i < allRewards.size(); i++) {
+            // On considère ici que reward.requiredReferrals identifie la récompense de façon unique.
+            if (!claimed.contains(allRewards.get(i).requiredReferrals)) {
+                startIndex = i;
+                break;
+            }
+        }
+
+        // Préparer la liste contenant 5 récompenses
+        List<Reward> visibleRewards = new ArrayList<>();
+        int count = 0;
+        int index = startIndex;
+        while (count < 5) {
+            // Pour gérer le cas où la liste totale est plus courte que 5, on boucle (si c'est voulu)
+            visibleRewards.add(allRewards.get(index % allRewards.size()));
+            index++;
+            count++;
+        }
+        return visibleRewards;
+    }
+
     public static void claimReward(ServerPlayerEntity player, int requiredReferrals) {
         String playerUUID = player.getUuid().toString();
         int currentReferrals = ReferralCounter.getCounter(playerUUID);
