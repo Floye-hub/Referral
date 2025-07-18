@@ -2,6 +2,7 @@ package com.floye.command;
 
 import com.floye.referral.util.*;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
@@ -39,7 +40,7 @@ public class RefCodeCommand {
                             })
                     )
 
-                    // Sous-commande pour réclamer un referral sur le joueur correspondant au code entré
+
                     // Sous-commande pour réclamer un referral sur le joueur correspondant au code entré
                     .then(LiteralArgumentBuilder
                             .<ServerCommandSource>literal("claim")
@@ -83,6 +84,22 @@ public class RefCodeCommand {
 
                                         // Marque le joueur actuel comme ayant réclamé un code
                                         ClaimTracker.markAsClaimed(playerUUID);
+
+                                        // Donne une récompense aléatoire au claimer
+                                        RewardManager.Reward claimerReward = RewardManager.getRandomClaimerReward();
+                                        if (claimerReward != null) {
+                                            MinecraftServer server = player.getServer();
+                                            if (server != null) {
+                                                for (String command : claimerReward.commands) {
+                                                    String processedCommand = command.replace("@p", player.getName().getString());
+                                                    server.getCommandManager().executeWithPrefix(
+                                                            server.getCommandSource().withSilent(),
+                                                            processedCommand
+                                                    );
+                                                }
+                                                player.sendMessage(Text.literal(claimerReward.message), false);
+                                            }
+                                        }
 
                                         source.sendFeedback(() -> Text.literal("The player with code " + playercode +
                                                 " now has " + total + " referral(s)."), false);

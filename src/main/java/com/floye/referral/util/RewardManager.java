@@ -26,6 +26,7 @@ public class RewardManager {
     private static final List<Reward> REWARDS = new ArrayList<>();
     private static final Map<String, Set<Integer>> CLAIMED_REWARDS = new HashMap<>();
     private static final List<Reward> REWARD_LOOPS = new ArrayList<>();
+    private static final List<Reward> claimerRewards = new ArrayList<>();
 
 
     public static class Reward {
@@ -40,12 +41,22 @@ public class RewardManager {
         public String guiTitle;
         public List<Reward> rewards;
         public List<Reward> loopRewards; // Nouveau champ pour les rewards de loop
+        public List<Reward> claimerRewards;
     }
     public static ItemStack getRewardItemStack(Reward reward) {
         Item rewardItem = getRewardItem(reward.item);
         return new ItemStack(rewardItem);
     }
 
+    public static List<Reward> getClaimerRewards() {
+        return Collections.unmodifiableList(claimerRewards);
+    }
+
+    public static Reward getRandomClaimerReward() {
+        if (claimerRewards.isEmpty()) return null;
+        Random random = new Random();
+        return claimerRewards.get(random.nextInt(claimerRewards.size()));
+    }
     public static void load() {
         REWARDS.clear();
         REWARD_LOOPS.clear(); // Vider les anciens loop rewards
@@ -65,6 +76,9 @@ public class RewardManager {
                     REWARDS.sort(Comparator.comparingInt(r -> r.requiredReferrals));
                 }
 
+                if (config.claimerRewards != null) {
+                    claimerRewards.addAll(config.claimerRewards);
+                }
                 if (config.loopRewards != null && !config.loopRewards.isEmpty()) {
                     REWARD_LOOPS.addAll(config.loopRewards);
                     System.out.println("[RewardManager] Loaded " + REWARD_LOOPS.size() + " loop rewards");
@@ -151,6 +165,25 @@ public class RewardManager {
 
         Rconfig.loopRewards = defaultLoopRewards;
 
+        List<Reward> defaultClaimerRewards = new ArrayList<>();
+
+        Reward claimerReward1 = new Reward();
+        claimerReward1.commands = Arrays.asList("give @p minecraft:emerald 1");
+        claimerReward1.message = "You received an emerald for using a referral code!";
+        claimerReward1.item = "minecraft:emerald";
+        claimerReward1.displayName = "Referral Bonus";
+        claimerReward1.lore = Arrays.asList("Thank you for using a referral code!");
+        defaultClaimerRewards.add(claimerReward1);
+
+        Reward claimerReward2 = new Reward();
+        claimerReward2.commands = Arrays.asList("give @p minecraft:gold_ingot 2");
+        claimerReward2.message = "You received gold ingots for using a referral code!";
+        claimerReward2.item = "minecraft:gold_ingot";
+        claimerReward2.displayName = "Referral Bonus";
+        claimerReward2.lore = Arrays.asList("Thank you for using a referral code!");
+        defaultClaimerRewards.add(claimerReward2);
+
+        Rconfig.claimerRewards = defaultClaimerRewards;
 
         try {
             // Ensure directory exists
@@ -167,6 +200,7 @@ public class RewardManager {
             try (Writer writer = new FileWriter(REWARDS_CONFIG_PATH.toFile())) {
                 Map<String, Object> config = new LinkedHashMap<>();
                 config.put("guiTitle", guiTitle);
+                config.put("claimerRewards", defaultClaimerRewards);
                 config.put("loopRewards", defaultLoopRewards);
                 config.put("rewards", defaultRewards);
                 GSON.toJson(config, writer);
