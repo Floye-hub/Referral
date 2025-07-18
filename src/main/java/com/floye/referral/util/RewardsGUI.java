@@ -47,7 +47,7 @@ public class RewardsGUI extends SimpleGui {
         int[] rewardSlots = new int[]{11, 12, 13, 14, 15};
 
 
-        // Afficher chacune des 5 récompenses dans les 5 premiers slots (ou adapter selon votre design)
+        // Afficher chacune des 5 récompenses dans les slots spécifiés
         for (int i = 0; i < visibleRewards.size() && i < rewardSlots.length; i++) {
             RewardManager.Reward reward = visibleRewards.get(i);
             Item rewardItem = RewardManager.getRewardItem(reward.item);
@@ -81,7 +81,7 @@ public class RewardsGUI extends SimpleGui {
                     element.addLoreLine(Text.literal("Already claimed").formatted(Formatting.RED));
                 }
             }
-            this.setSlot(i, element);
+            this.setSlot(rewardSlots[i], element);
         }
 
         // Bouton "Page précédente" dans le slot 27
