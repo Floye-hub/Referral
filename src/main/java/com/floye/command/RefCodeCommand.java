@@ -40,6 +40,7 @@ public class RefCodeCommand {
                     )
 
                     // Sous-commande pour réclamer un referral sur le joueur correspondant au code entré
+                    // Sous-commande pour réclamer un referral sur le joueur correspondant au code entré
                     .then(LiteralArgumentBuilder
                             .<ServerCommandSource>literal("claim")
                             .then(RequiredArgumentBuilder
@@ -67,6 +68,12 @@ public class RefCodeCommand {
                                         String recipientUUID = CodeManager.findPlayerUUIDByCode(playercode);
                                         if (recipientUUID == null) {
                                             source.sendFeedback(() -> Text.literal("Invalid code or not found."), false);
+                                            return 0;
+                                        }
+
+                                        // Empêcher un joueur de réclamer son propre code
+                                        if (playerUUID.equals(recipientUUID)) {
+                                            source.sendFeedback(() -> Text.literal("You cannot claim your own code!"), false);
                                             return 0;
                                         }
 
