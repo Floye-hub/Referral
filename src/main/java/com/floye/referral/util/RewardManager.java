@@ -186,6 +186,7 @@ public class RewardManager {
             try (Writer writer = new FileWriter(REWARDS_CONFIG_PATH.toFile())) {
                 Map<String, Object> config = new HashMap<>();
                 config.put("guiTitle", guiTitle);
+                config.put("loopRewards", defaultLoopRewards);
                 config.put("rewards", defaultRewards);
                 GSON.toJson(config, writer);
                 System.out.println("[RewardManager] Default config created at: " + REWARDS_CONFIG_PATH);
