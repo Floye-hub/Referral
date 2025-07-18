@@ -20,7 +20,7 @@ public class ReferralCounter {
     // Chemin du fichier de sauvegarde
     private static final Path COUNTERS_PATH = FabricLoader.getInstance()
             .getConfigDir()
-            .resolve("ref_counters.json");
+            .resolve("referral/ref_counters.json");
 
     private static final Gson GSON = new Gson();
 

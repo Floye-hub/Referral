@@ -26,26 +26,6 @@ public class RewardManager {
     private static final Map<String, Set<Integer>> CLAIMED_REWARDS = new HashMap<>();
     private static final List<Reward> REWARD_LOOPS = new ArrayList<>();
 
-    static {
-        // Définir les récompenses du loop
-        Reward loop1 = new Reward();
-        loop1.requiredReferrals = 0; // Pas utilisé dans le loop
-        loop1.commands = Arrays.asList("give @p minecraft:emerald 1");
-        loop1.message = "You received an emerald for your referral!";
-        loop1.item = "minecraft:emerald";
-        loop1.displayName = "Basic Referral Reward";
-        loop1.lore = Arrays.asList("Standard reward for referrals");
-        REWARD_LOOPS.add(loop1);
-
-        Reward loop2 = new Reward();
-        loop2.requiredReferrals = 0; // Pas utilisé dans le loop
-        loop2.commands = Arrays.asList("give @p minecraft:gold_ingot 2");
-        loop2.message = "You received gold ingots for your referral!";
-        loop2.item = "minecraft:gold_ingot";
-        loop2.displayName = "Alternate Referral Reward";
-        loop2.lore = Arrays.asList("Alternate standard reward");
-        REWARD_LOOPS.add(loop2);
-    }
 
     public static class Reward {
         public int requiredReferrals;
@@ -74,9 +54,10 @@ public class RewardManager {
 
         if (REWARDS_CONFIG_PATH.toFile().exists()) {
             try (Reader reader = new FileReader(REWARDS_CONFIG_PATH.toFile())) {
-                RewardConfig config = GSON.fromJson(reader, RewardConfig.class);
 
+                RewardConfig config = GSON.fromJson(reader, RewardConfig.class);
                 guiTitle = config.guiTitle != null ? config.guiTitle : "Referral Rewards";
+
 
                 if (config.rewards != null) {
                     REWARDS.addAll(config.rewards);
@@ -152,7 +133,6 @@ public class RewardManager {
         List<Reward> defaultLoopRewards = new ArrayList<>();
 
         Reward loop1 = new Reward();
-        loop1.requiredReferrals = 0; // Non utilisé pour les loops
         loop1.commands = Arrays.asList("give @p minecraft:emerald 1");
         loop1.message = "You received an emerald for your referral!";
         loop1.item = "minecraft:emerald";
@@ -161,7 +141,6 @@ public class RewardManager {
         defaultLoopRewards.add(loop1);
 
         Reward loop2 = new Reward();
-        loop2.requiredReferrals = 0; // Non utilisé pour les loops
         loop2.commands = Arrays.asList("give @p minecraft:gold_ingot 2");
         loop2.message = "You received gold ingots for your referral!";
         loop2.item = "minecraft:gold_ingot";
@@ -170,6 +149,7 @@ public class RewardManager {
         defaultLoopRewards.add(loop2);
 
         Rconfig.loopRewards = defaultLoopRewards;
+
 
         try {
             // Ensure directory exists
@@ -184,7 +164,7 @@ public class RewardManager {
 
             // Write default config
             try (Writer writer = new FileWriter(REWARDS_CONFIG_PATH.toFile())) {
-                Map<String, Object> config = new HashMap<>();
+                Map<String, Object> config = new LinkedHashMap<>();
                 config.put("guiTitle", guiTitle);
                 config.put("loopRewards", defaultLoopRewards);
                 config.put("rewards", defaultRewards);
